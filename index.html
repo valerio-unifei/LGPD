@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UNIFEI - Sanitizador LGPD</title>
+<link rel="stylesheet" href="css/style.css" />
+<!-- favicon -->
+<link rel="icon" type="image/x-icon" href="https://transparencia.unifei.edu.br/wp-content/uploads/2023/09/cropped-simbolo_RGB-32x32.png" />
+</head>
+<body>
+  <header class="app-header">
+    <h1><img src="https://transparencia.unifei.edu.br/wp-content/uploads/2023/09/cropped-simbolo_RGB-32x32.png" alt="Logo UNIFEI" class="app-logo" /> UNIFEI - Sanitizador LGPD</h1>
+    <p>
+      Detecte e anonimize dados pessoais (nomes, CPF, e-mail, telefone, endereço, CEP, datas e valores
+      monetários) usando um modelo de rede neural rodando inteiramente no seu navegador.
+    </p>
+    <span class="badge-privacy">100% privado — nenhum dado sai do seu computador!</span>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>1. Envie um documento ou cole um texto</h2>
+      <div id="dropZone" class="drop-zone">
+        <strong>Clique para escolher um arquivo</strong> ou arraste aqui
+        <span class="hint">Formatos suportados: PDF, DOCX, TXT, MD</span>
+        <span id="fileName"></span>
+      </div>
+      <input type="file" id="fileInput" accept=".pdf,.docx,.txt,.md" hidden />
+
+      <div class="divider">— ou —</div>
+
+      <textarea id="pasteText" placeholder="Cole aqui o texto que deseja sanitizar..."></textarea>
+
+      <div class="actions">
+        <button id="btnSanitize" class="btn-primary">Sanitizar documento</button>
+        <button id="btnClear" class="btn-secondary">Apagar</button>
+      </div>
+
+      <div id="modelLoadNotice" hidden>
+        O modelo de IA (~330&nbsp;MB) é baixado apenas na primeira utilização e roda 100%
+        local no navegador. Aguarde o carregamento completar.
+      </div>
+      <div id="statusBox" role="status"></div>
+      <div id="progressBar" class="progress-track" hidden>
+        <div id="progressFill" class="progress-fill"></div>
+      </div>
+    </section>
+
+    <section id="resultSection" class="card" hidden>
+      <h2>2. Resultado da sanitização</h2>
+      <div id="entitySummary"></div>
+      <h3>Prévia do texto sanitizado</h3>
+      <pre id="previewSanitized" class="preview-box"></pre>
+      <div class="download-row">
+        <button id="btnDownloadMd" class="btn-download">⬇️ Baixar Markdown sanitizado (.md)</button>
+        <button id="btnDownloadJson" class="btn-download">⬇️ Baixar dicionário de decodificação (.json)</button>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    Copyright &copy; 2026 UNIFEI IESTI.
+    Autor: <a href="https://sigaa.unifei.edu.br/sigaa/public/docente/portal.jsf?siape=1545021" target="_blank">Carlos Moraes.</a>
+    Todas as bibliotecas de conversão (PDF, DOCX) e modelo neural são baixadas localmente e executadas no navegador do usuário.
+    Nenhum texto ou arquivo é transmitido para qualquer servidor.
+  </footer>
+
+  <script src="vendor/ort/ort.min.js"></script>
+  <script src="vendor/mammoth/mammoth.browser.min.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
