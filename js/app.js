@@ -13,7 +13,9 @@ const els = {
   pasteText: document.getElementById("pasteText"),
   fileName: document.getElementById("fileName"),
   btnSanitize: document.getElementById("btnSanitize"),
+  btnShowRestore: document.getElementById("btnShowRestore"),
   btnClear: document.getElementById("btnClear"),
+  restorePanel: document.getElementById("restorePanel"),
   statusBox: document.getElementById("statusBox"),
   progressBar: document.getElementById("progressBar"),
   progressFill: document.getElementById("progressFill"),
@@ -23,11 +25,16 @@ const els = {
   btnDownloadMd: document.getElementById("btnDownloadMd"),
   btnDownloadJson: document.getElementById("btnDownloadJson"),
   modelLoadNotice: document.getElementById("modelLoadNotice"),
+  restoreJsonInput: document.getElementById("restoreJsonInput"),
+  btnRestore: document.getElementById("btnRestore"),
+  restorePreview: document.getElementById("restorePreview"),
+  btnDownloadRestored: document.getElementById("btnDownloadRestored"),
 };
 
 let selectedFile = null;
 let sanitizer = null;
 let lastResult = null; // { sanitizedText, dictionary, entities, baseName }
+let restoredResult = null; // { text, baseName }
 
 function setStatus(message, isError = false) {
   els.statusBox.textContent = message;
@@ -101,6 +108,64 @@ function downloadBlob(content, filename, mimeType) {
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
+}
+
+function resetRestoreOutput() {
+  restoredResult = null;
+  els.restorePreview.hidden = true;
+  els.restorePreview.textContent = "";
+  els.btnDownloadRestored.hidden = true;
+}
+
+async function runRestore() {
+  const jsonFile = els.restoreJsonInput.files[0];
+
+  if ((!selectedFile && !els.pasteText.value.trim()) || !jsonFile) {
+    setStatus("Envie ou cole o documento sanitizado e selecione o dicionário JSON antes de reverter.", true);
+    return;
+  }
+
+  try {
+    els.btnRestore.disabled = true;
+    resetRestoreOutput();
+    let sanitizedText;
+    let baseName;
+    if (selectedFile) {
+      sanitizedText = await extractText(selectedFile);
+      baseName = baseNameFromFile(selectedFile.name);
+    } else {
+      sanitizedText = els.pasteText.value;
+      baseName = "texto_colado";
+    }
+
+    if (!sanitizedText.trim()) {
+      throw new Error("O documento sanitizado não contém texto.");
+    }
+
+    const payload = JSON.parse(await jsonFile.text());
+    const dictionary = payload.dicionario;
+
+    if (!dictionary || typeof dictionary !== "object" || Array.isArray(dictionary)) {
+      throw new Error("O JSON não contém um dicionário de decodificação válido.");
+    }
+
+    const placeholders = Object.keys(dictionary).sort((a, b) => b.length - a.length);
+    const restoredText = placeholders.reduce(
+      (text, placeholder) => text.split(placeholder).join(String(dictionary[placeholder])),
+      sanitizedText
+    );
+
+    restoredResult = { text: restoredText, baseName };
+    els.restorePreview.textContent = restoredText;
+    els.restorePreview.hidden = false;
+    els.btnDownloadRestored.hidden = false;
+    setStatus(`Sanitização revertida: ${placeholders.length} marcador(es) restaurado(s).`);
+  } catch (err) {
+    console.error(err);
+    setStatus(`Erro ao reverter a sanitização: ${err.message || err}`, true);
+  } finally {
+    els.btnRestore.disabled = false;
+  }
 }
 
 async function runSanitization() {
@@ -190,12 +255,20 @@ els.pasteText.addEventListener("input", () => {
 });
 
 els.btnSanitize.addEventListener("click", runSanitization);
+els.btnShowRestore.addEventListener("click", () => {
+  els.restorePanel.hidden = !els.restorePanel.hidden;
+  if (!els.restorePanel.hidden) els.restoreJsonInput.focus();
+});
+els.btnRestore.addEventListener("click", runRestore);
 
 els.btnClear.addEventListener("click", () => {
   selectedFile = null;
   els.fileInput.value = "";
   els.fileName.textContent = "";
   els.pasteText.value = "";
+  els.restoreJsonInput.value = "";
+  els.restorePanel.hidden = true;
+  resetRestoreOutput();
   resetOutputs();
   setStatus("");
 });
@@ -220,5 +293,14 @@ els.btnDownloadJson.addEventListener("click", () => {
     JSON.stringify(payload, null, 2),
     `${lastResult.baseName}_dicionario.json`,
     "application/json"
+  );
+});
+
+els.btnDownloadRestored.addEventListener("click", () => {
+  if (!restoredResult) return;
+  downloadBlob(
+    restoredResult.text,
+    `${restoredResult.baseName}_restaurado.md`,
+    "text/markdown"
   );
 });

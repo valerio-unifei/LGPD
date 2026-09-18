@@ -30,6 +30,11 @@ modelo `celiudos/legal-bert-lgpd`).
    marcador ao valor original (`{"[CPF_1]": "123.456.789-00", ...}`),
    permitindo reverter a sanitização quando necessário/autorizado.
 
+Para reverter, envie ou cole o documento sanitizado no tópico 1, abra
+a opção **Reverter sanitização** e selecione o respectivo dicionário JSON. A
+aplicação restaura os marcadores localmente e permite baixar o documento
+original reconstruído.
+
 ## Como executar
 
 Por causa das políticas de segurança dos navegadores (CORS/módulos ES para
@@ -42,7 +47,6 @@ texto, sanitização) continua acontecendo no navegador do usuário.
 Exemplo com Python (já disponível no ambiente):
 
 ```powershell
-cd web
 python -m http.server 8000
 ```
 
